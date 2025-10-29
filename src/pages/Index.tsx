@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import UploadSection from "@/components/UploadSection";
 import AnalysisResult from "@/components/AnalysisResult";
 import HistoryTab from "@/components/HistoryTab";
+import LoadingAnalysis from "@/components/LoadingAnalysis";
+import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-trading.jpg";
 
@@ -145,7 +147,9 @@ const Index = () => {
 
           <TabsContent value="home" className="space-y-8">
             <div className="max-w-4xl mx-auto">
-              {!analysisResult ? (
+              {isAnalyzing ? (
+                <LoadingAnalysis />
+              ) : !analysisResult ? (
                 <UploadSection onImageSelected={handleImageSelected} isAnalyzing={isAnalyzing} />
               ) : (
                 <>
@@ -205,6 +209,8 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <Footer />
     </div>
   );
 };

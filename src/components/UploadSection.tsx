@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Upload, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { Upload, TrendingUp, TrendingDown, Activity, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UploadSectionProps {
   onImageSelected: (image: File, assetType: string) => void;
@@ -33,12 +34,23 @@ export default function UploadSection({ onImageSelected, isAnalyzing }: UploadSe
   };
 
   return (
-    <Card className="p-8 bg-card shadow-card border-border">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-2">Upload Your Chart</h2>
-          <p className="text-muted-foreground">Select a chart image and choose your asset type</p>
-        </div>
+    <TooltipProvider>
+      <Card className="p-8 bg-card shadow-card border-border">
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-2xl font-bold">Upload Your Chart</h2>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Upload a clear chart screenshot with visible candlesticks, indicators, and price levels for best results.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <p className="text-muted-foreground">Select a chart image and choose your asset type</p>
+          </div>
 
         <div className="space-y-4">
           <div>
@@ -112,5 +124,6 @@ export default function UploadSection({ onImageSelected, isAnalyzing }: UploadSe
         </div>
       </div>
     </Card>
+    </TooltipProvider>
   );
 }
