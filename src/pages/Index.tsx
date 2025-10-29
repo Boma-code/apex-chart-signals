@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Crown, Home, History as HistoryIcon } from "lucide-react";
+import { Crown, Home, History as HistoryIcon, User, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import UploadSection from "@/components/UploadSection";
 import AnalysisResult from "@/components/AnalysisResult";
 import HistoryTab from "@/components/HistoryTab";
 import LoadingAnalysis from "@/components/LoadingAnalysis";
 import Footer from "@/components/Footer";
+import PremiumTab from "@/components/PremiumTab";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-trading.jpg";
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface AnalysisData {
   signal: string;
@@ -24,12 +27,43 @@ interface AnalysisData {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisData | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("home");
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
+  };
+
   const handleImageSelected = async (image: File, assetType: string) => {
+    if (!user) {
+      toast.error("Please sign in to analyze charts");
+      navigate("/auth");
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisResult(null);
     
@@ -52,6 +86,7 @@ const Index = () => {
           const { error: dbError } = await supabase
             .from('chart_analyses')
             .insert({
+              user_id: user.id,
               image_url: base64Image,
               asset_type: assetType,
               signal: data.signal,
@@ -67,7 +102,8 @@ const Index = () => {
 
           if (dbError) {
             console.error('Database error:', dbError);
-            // Don't throw, still show results even if saving fails
+            toast.error('Failed to save analysis. Please try again.');
+            return;
           }
 
           setAnalysisResult(data);
@@ -89,6 +125,35 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Auth Button */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        {user ? (
+          <>
+            <Button variant="outline" className="bg-background/80 backdrop-blur-sm">
+              <User className="h-4 w-4 mr-2" />
+              {user.email}
+            </Button>
+            <Button 
+              variant="outline" 
+              className="bg-background/80 backdrop-blur-sm"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </>
+        ) : (
+          <Button 
+            variant="outline" 
+            className="bg-background/80 backdrop-blur-sm"
+            onClick={() => navigate("/auth")}
+          >
+            <User className="h-4 w-4 mr-2" />
+            Sign In
+          </Button>
+        )}
+      </div>
+      
       {/* Hero Section */}
       {!analysisResult && activeTab === "home" && (
         <div className="relative overflow-hidden">
@@ -178,33 +243,21 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="upgrade">
-            <div className="max-w-2xl mx-auto text-center py-12">
-              <Crown className="h-16 w-16 mx-auto mb-6 text-primary" />
-              <h2 className="text-3xl font-bold mb-4">Upgrade to Premium</h2>
-              <p className="text-muted-foreground mb-8">
-                Unlock advanced AI analysis, custom strategies, and real-time alerts
-              </p>
-              <div className="space-y-4 text-left max-w-md mx-auto mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-bullish"></div>
-                  <span>Advanced pattern recognition</span>
+            <div className="max-w-4xl mx-auto">
+              {user ? (
+                <PremiumTab />
+              ) : (
+                <div className="max-w-2xl mx-auto text-center py-12">
+                  <Crown className="h-16 w-16 mx-auto mb-6 text-primary" />
+                  <h2 className="text-3xl font-bold mb-4">Sign in to Access Premium</h2>
+                  <p className="text-muted-foreground mb-8">
+                    Create an account to unlock premium features with crypto payment
+                  </p>
+                  <Button size="lg" onClick={() => navigate("/auth")}>
+                    Sign In / Sign Up
+                  </Button>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-bullish"></div>
-                  <span>Real-time market alerts</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-bullish"></div>
-                  <span>Custom trading strategies</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-bullish"></div>
-                  <span>Priority AI processing</span>
-                </div>
-              </div>
-              <Button size="lg" className="bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold shadow-glow">
-                Coming Soon
-              </Button>
+              )}
             </div>
           </TabsContent>
         </Tabs>
