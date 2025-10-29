@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { toast } from "sonner";
+import AnalysisResult from "@/components/AnalysisResult";
+import { Button } from "@/components/ui/button";
 
 interface Analysis {
   id: string;
@@ -13,11 +15,18 @@ interface Analysis {
   market_condition: string;
   created_at: string;
   image_url: string;
+  entry_price: number | null;
+  stop_loss: number | null;
+  take_profit: number | null;
+  pattern_details: string;
+  indicators_analysis: string;
+  ai_commentary: string;
 }
 
 export default function HistoryTab() {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -27,7 +36,7 @@ export default function HistoryTab() {
     try {
       const { data, error } = await supabase
         .from('chart_analyses')
-        .select('id, signal, confidence, asset_type, market_condition, created_at, image_url')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -70,12 +79,43 @@ export default function HistoryTab() {
     );
   }
 
+  if (selectedAnalysis) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          onClick={() => setSelectedAnalysis(null)} 
+          variant="outline"
+        >
+          ← Back to History
+        </Button>
+        <AnalysisResult 
+          analysis={{
+            signal: selectedAnalysis.signal,
+            confidence: selectedAnalysis.confidence,
+            entry_price: selectedAnalysis.entry_price,
+            stop_loss: selectedAnalysis.stop_loss,
+            take_profit: selectedAnalysis.take_profit,
+            market_condition: selectedAnalysis.market_condition,
+            pattern_details: selectedAnalysis.pattern_details,
+            indicators_analysis: selectedAnalysis.indicators_analysis,
+            ai_commentary: selectedAnalysis.ai_commentary,
+          }}
+          imageUrl={selectedAnalysis.image_url}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold mb-6">Analysis History</h2>
       <div className="grid gap-4">
         {analyses.map((analysis) => (
-          <Card key={analysis.id} className="p-6 shadow-card border-border hover:border-primary transition-colors">
+          <Card 
+            key={analysis.id} 
+            className="p-6 shadow-card border-border hover:border-primary transition-colors cursor-pointer"
+            onClick={() => setSelectedAnalysis(analysis)}
+          >
             <div className="flex items-start gap-4">
               <img
                 src={analysis.image_url}
