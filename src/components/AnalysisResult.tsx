@@ -1,7 +1,8 @@
-import { TrendingUp, TrendingDown, Minus, Target, Shield, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Target, Shield, DollarSign, AlertTriangle, BarChart3, Percent } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useMemo } from "react";
 
 interface AnalysisResultProps {
   analysis: {
@@ -19,6 +20,25 @@ interface AnalysisResultProps {
 }
 
 export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultProps) {
+  // Calculate Risk-to-Reward Ratio
+  const riskRewardRatio = useMemo(() => {
+    if (!analysis.entry_price || !analysis.stop_loss || !analysis.take_profit) return null;
+    const risk = Math.abs(analysis.entry_price - analysis.stop_loss);
+    const reward = Math.abs(analysis.take_profit - analysis.entry_price);
+    return risk > 0 ? (reward / risk).toFixed(2) : null;
+  }, [analysis.entry_price, analysis.stop_loss, analysis.take_profit]);
+
+  // Calculate potential profit/loss percentages
+  const potentialProfit = useMemo(() => {
+    if (!analysis.entry_price || !analysis.take_profit) return null;
+    return (((analysis.take_profit - analysis.entry_price) / analysis.entry_price) * 100).toFixed(2);
+  }, [analysis.entry_price, analysis.take_profit]);
+
+  const potentialLoss = useMemo(() => {
+    if (!analysis.entry_price || !analysis.stop_loss) return null;
+    return (((analysis.entry_price - analysis.stop_loss) / analysis.entry_price) * 100).toFixed(2);
+  }, [analysis.entry_price, analysis.stop_loss]);
+
   const getSignalColor = (signal: string) => {
     switch (signal) {
       case "BUY":
@@ -48,55 +68,100 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
         <img src={imageUrl} alt="Analyzed chart" className="w-full h-auto" />
       </Card>
 
-      {/* Signal Card */}
-      <Card className={`p-8 shadow-card border-border ${getSignalColor(analysis.signal)}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {getSignalIcon(analysis.signal)}
-            <div>
-              <h3 className="text-3xl font-bold">{analysis.signal}</h3>
-              <p className="text-sm opacity-90">Trading Signal</p>
+      {/* Signal Card with Enhanced Metrics */}
+      <Card className={`p-8 shadow-glow border-2 ${getSignalColor(analysis.signal)}`}>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {getSignalIcon(analysis.signal)}
+              <div>
+                <h3 className="text-4xl font-bold">{analysis.signal}</h3>
+                <p className="text-sm opacity-90">Trading Signal</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-5xl font-bold">{analysis.confidence}%</div>
+              <p className="text-sm opacity-90">Confidence Score</p>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold">{analysis.confidence}%</div>
-            <p className="text-sm opacity-90">Confidence</p>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="opacity-90">Signal Strength</span>
+              <Badge variant={analysis.confidence >= 80 ? "default" : analysis.confidence >= 60 ? "secondary" : "outline"}>
+                {analysis.confidence >= 80 ? "Very Strong" : analysis.confidence >= 60 ? "Strong" : "Moderate"}
+              </Badge>
+            </div>
+            <Progress value={analysis.confidence} className="h-3" />
           </div>
-        </div>
-        <div className="mt-4">
-          <Progress value={analysis.confidence} className="h-2" />
+
+          {/* Risk-Reward Display */}
+          {riskRewardRatio && (
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+              <div className="text-center">
+                <BarChart3 className="h-5 w-5 mx-auto mb-1 opacity-75" />
+                <div className="text-2xl font-bold">{riskRewardRatio}:1</div>
+                <p className="text-xs opacity-75">Risk/Reward</p>
+              </div>
+              <div className="text-center">
+                <TrendingUp className="h-5 w-5 mx-auto mb-1 opacity-75" />
+                <div className="text-2xl font-bold">+{potentialProfit}%</div>
+                <p className="text-xs opacity-75">Potential Gain</p>
+              </div>
+              <div className="text-center">
+                <TrendingDown className="h-5 w-5 mx-auto mb-1 opacity-75" />
+                <div className="text-2xl font-bold">-{potentialLoss}%</div>
+                <p className="text-xs opacity-75">Potential Loss</p>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
-      {/* Key Levels */}
+      {/* Enhanced Key Levels with Visual Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {analysis.entry_price && (
-          <Card className="p-6 shadow-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <Target className="h-5 w-5 text-primary" />
+          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-primary/5 hover:shadow-glow transition-all">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-primary/20">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
               <h4 className="font-semibold">Entry Price</h4>
             </div>
-            <p className="text-2xl font-bold">{analysis.entry_price.toFixed(5)}</p>
+            <p className="text-3xl font-bold mb-2">{analysis.entry_price.toFixed(5)}</p>
+            <Badge variant="outline" className="text-xs">Recommended entry point</Badge>
           </Card>
         )}
         
         {analysis.stop_loss && (
-          <Card className="p-6 shadow-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <Shield className="h-5 w-5 text-bearish" />
+          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-bearish/5 hover:shadow-glow transition-all">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-bearish/20">
+                <Shield className="h-5 w-5 text-bearish" />
+              </div>
               <h4 className="font-semibold">Stop Loss</h4>
             </div>
-            <p className="text-2xl font-bold">{analysis.stop_loss.toFixed(5)}</p>
+            <p className="text-3xl font-bold mb-2">{analysis.stop_loss.toFixed(5)}</p>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <AlertTriangle className="h-3 w-3" />
+              <span>Risk management level</span>
+            </div>
           </Card>
         )}
         
         {analysis.take_profit && (
-          <Card className="p-6 shadow-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <DollarSign className="h-5 w-5 text-bullish" />
+          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-bullish/5 hover:shadow-glow transition-all">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-lg bg-bullish/20">
+                <DollarSign className="h-5 w-5 text-bullish" />
+              </div>
               <h4 className="font-semibold">Take Profit</h4>
             </div>
-            <p className="text-2xl font-bold">{analysis.take_profit.toFixed(5)}</p>
+            <p className="text-3xl font-bold mb-2">{analysis.take_profit.toFixed(5)}</p>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Percent className="h-3 w-3" />
+              <span>Target profit level</span>
+            </div>
           </Card>
         )}
       </div>
