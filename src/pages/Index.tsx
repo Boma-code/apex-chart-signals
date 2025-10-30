@@ -57,7 +57,7 @@ const Index = () => {
     navigate("/auth");
   };
 
-  const handleImageSelected = async (image: File, assetType: string) => {
+  const handleImageSelected = async (image: File, assetType: string, title?: string) => {
     if (!user) {
       toast.error("Please sign in to analyze charts");
       navigate("/auth");
@@ -98,6 +98,7 @@ const Index = () => {
               pattern_details: data.pattern_details,
               indicators_analysis: data.indicators_analysis,
               ai_commentary: data.ai_commentary,
+              title: title || null,
             });
 
           if (dbError) {

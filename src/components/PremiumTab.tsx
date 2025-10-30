@@ -159,7 +159,7 @@ export default function PremiumTab() {
   };
 
   const paymentAddresses: Record<string, string> = {
-    "BTC": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    "BTC": "bc1qhenu8ts7rxv2yj4ac3udtwx6fy9znh2a9hv8aw",
     "ETH": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
     "USDT": "TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC",
     "USDC": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"

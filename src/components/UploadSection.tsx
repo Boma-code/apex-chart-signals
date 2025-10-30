@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface UploadSectionProps {
-  onImageSelected: (image: File, assetType: string) => void;
+  onImageSelected: (image: File, assetType: string, title?: string) => void;
   isAnalyzing: boolean;
 }
 
@@ -14,6 +14,7 @@ export default function UploadSection({ onImageSelected, isAnalyzing }: UploadSe
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [assetType, setAssetType] = useState<string>("forex");
+  const [title, setTitle] = useState<string>("");
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,7 +30,8 @@ export default function UploadSection({ onImageSelected, isAnalyzing }: UploadSe
 
   const handleAnalyze = () => {
     if (selectedImage) {
-      onImageSelected(selectedImage, assetType);
+      onImageSelected(selectedImage, assetType, title || undefined);
+      setTitle("");
     }
   };
 
@@ -53,6 +55,17 @@ export default function UploadSection({ onImageSelected, isAnalyzing }: UploadSe
           </div>
 
         <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Analysis Title (Optional)</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., BTC/USD Daily Chart"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Asset Type</label>
             <Select value={assetType} onValueChange={setAssetType}>
