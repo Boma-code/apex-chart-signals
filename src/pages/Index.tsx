@@ -34,22 +34,39 @@ const Index = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisData | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("home");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          checkAdminStatus(session.user.id);
+        } else {
+          setIsAdmin(false);
+        }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    const { data } = await supabase.rpc('has_role', {
+      _user_id: userId,
+      _role: 'admin'
+    });
+    setIsAdmin(data || false);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -130,6 +147,16 @@ const Index = () => {
       <div className="absolute top-4 right-4 z-20 flex gap-2">
         {user ? (
           <>
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                className="bg-background/80 backdrop-blur-sm"
+                onClick={() => navigate("/admin")}
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Admin Dashboard
+              </Button>
+            )}
             <Button variant="outline" className="bg-background/80 backdrop-blur-sm">
               <User className="h-4 w-4 mr-2" />
               {user.email}
