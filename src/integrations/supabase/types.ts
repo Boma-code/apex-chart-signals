@@ -29,6 +29,7 @@ export type Database = {
           signal: string
           stop_loss: number | null
           take_profit: number | null
+          title: string | null
           user_id: string | null
         }
         Insert: {
@@ -45,6 +46,7 @@ export type Database = {
           signal: string
           stop_loss?: number | null
           take_profit?: number | null
+          title?: string | null
           user_id?: string | null
         }
         Update: {
@@ -61,6 +63,7 @@ export type Database = {
           signal?: string
           stop_loss?: number | null
           take_profit?: number | null
+          title?: string | null
           user_id?: string | null
         }
         Relationships: []

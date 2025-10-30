@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Clock, TrendingUp, TrendingDown, Minus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import AnalysisResult from "@/components/AnalysisResult";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Analysis {
   id: string;
@@ -21,16 +22,32 @@ interface Analysis {
   pattern_details: string;
   indicators_analysis: string;
   ai_commentary: string;
+  title: string | null;
+  user_id: string | null;
 }
 
 export default function HistoryTab() {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    checkAdminStatus();
     fetchHistory();
   }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
+    
+    setIsAdmin(data || false);
+  };
 
   const fetchHistory = async () => {
     try {
@@ -38,7 +55,7 @@ export default function HistoryTab() {
         .from('chart_analyses')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(isAdmin ? 50 : 10);
 
       if (error) throw error;
       setAnalyses(data || []);
@@ -47,6 +64,23 @@ export default function HistoryTab() {
       toast.error('Failed to load analysis history');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('chart_analyses')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Analysis deleted successfully');
+      fetchHistory();
+    } catch (error) {
+      console.error('Error deleting analysis:', error);
+      toast.error('Failed to delete analysis');
     }
   };
 
@@ -108,21 +142,31 @@ export default function HistoryTab() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold mb-6">Analysis History</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold">
+          {isAdmin ? "Admin Panel - All Analyses" : "Analysis History"}
+        </h2>
+        {isAdmin && (
+          <Badge variant="destructive">Admin Mode</Badge>
+        )}
+      </div>
       <div className="grid gap-4">
         {analyses.map((analysis) => (
           <Card 
             key={analysis.id} 
-            className="p-6 shadow-card border-border hover:border-primary transition-colors cursor-pointer"
-            onClick={() => setSelectedAnalysis(analysis)}
+            className="p-6 shadow-card border-border hover:border-primary transition-colors"
           >
             <div className="flex items-start gap-4">
               <img
                 src={analysis.image_url}
                 alt="Chart thumbnail"
-                className="w-24 h-24 object-cover rounded-lg"
+                className="w-24 h-24 object-cover rounded-lg cursor-pointer"
+                onClick={() => setSelectedAnalysis(analysis)}
               />
-              <div className="flex-1">
+              <div className="flex-1 cursor-pointer" onClick={() => setSelectedAnalysis(analysis)}>
+                {analysis.title && (
+                  <h3 className="font-semibold text-lg mb-2">{analysis.title}</h3>
+                )}
                 <div className="flex items-center gap-2 mb-2">
                   {getSignalIcon(analysis.signal)}
                   <span className="font-bold text-lg">{analysis.signal}</span>
@@ -138,6 +182,31 @@ export default function HistoryTab() {
                   <span>{new Date(analysis.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Analysis</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this analysis? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDelete(analysis.id)}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </Card>
         ))}
