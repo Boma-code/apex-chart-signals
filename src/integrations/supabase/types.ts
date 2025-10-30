@@ -14,8 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      backtest_results: {
+        Row: {
+          analysis_id: string | null
+          created_at: string
+          end_date: string
+          final_capital: number
+          id: string
+          initial_capital: number
+          losing_trades: number
+          max_drawdown: number
+          sharpe_ratio: number | null
+          start_date: string
+          symbol: string
+          timeframe: string
+          total_pnl: number
+          total_pnl_percentage: number
+          total_trades: number
+          trades_data: Json | null
+          user_id: string
+          win_rate: number
+          winning_trades: number
+        }
+        Insert: {
+          analysis_id?: string | null
+          created_at?: string
+          end_date: string
+          final_capital: number
+          id?: string
+          initial_capital: number
+          losing_trades: number
+          max_drawdown: number
+          sharpe_ratio?: number | null
+          start_date: string
+          symbol: string
+          timeframe: string
+          total_pnl: number
+          total_pnl_percentage: number
+          total_trades: number
+          trades_data?: Json | null
+          user_id: string
+          win_rate: number
+          winning_trades: number
+        }
+        Update: {
+          analysis_id?: string | null
+          created_at?: string
+          end_date?: string
+          final_capital?: number
+          id?: string
+          initial_capital?: number
+          losing_trades?: number
+          max_drawdown?: number
+          sharpe_ratio?: number | null
+          start_date?: string
+          symbol?: string
+          timeframe?: string
+          total_pnl?: number
+          total_pnl_percentage?: number
+          total_trades?: number
+          trades_data?: Json | null
+          user_id?: string
+          win_rate?: number
+          winning_trades?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backtest_results_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "chart_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chart_analyses: {
         Row: {
+          actual_outcome: string | null
           ai_commentary: string
           asset_type: string
           confidence: number
@@ -25,6 +100,8 @@ export type Database = {
           image_url: string
           indicators_analysis: string | null
           market_condition: string | null
+          outcome_pnl: number | null
+          outcome_verified_at: string | null
           pattern_details: string | null
           signal: string
           stop_loss: number | null
@@ -33,6 +110,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          actual_outcome?: string | null
           ai_commentary: string
           asset_type: string
           confidence: number
@@ -42,6 +120,8 @@ export type Database = {
           image_url: string
           indicators_analysis?: string | null
           market_condition?: string | null
+          outcome_pnl?: number | null
+          outcome_verified_at?: string | null
           pattern_details?: string | null
           signal: string
           stop_loss?: number | null
@@ -50,6 +130,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          actual_outcome?: string | null
           ai_commentary?: string
           asset_type?: string
           confidence?: number
@@ -59,6 +140,8 @@ export type Database = {
           image_url?: string
           indicators_analysis?: string | null
           market_condition?: string | null
+          outcome_pnl?: number | null
+          outcome_verified_at?: string | null
           pattern_details?: string | null
           signal?: string
           stop_loss?: number | null
@@ -67,6 +150,74 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      paper_trades: {
+        Row: {
+          analysis_id: string | null
+          asset_type: string
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          exit_price: number | null
+          id: string
+          opened_at: string
+          pnl: number | null
+          pnl_percentage: number | null
+          position_type: string
+          quantity: number
+          status: string
+          stop_loss: number | null
+          symbol: string
+          take_profit: number | null
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          asset_type: string
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          exit_price?: number | null
+          id?: string
+          opened_at?: string
+          pnl?: number | null
+          pnl_percentage?: number | null
+          position_type: string
+          quantity: number
+          status?: string
+          stop_loss?: number | null
+          symbol: string
+          take_profit?: number | null
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          asset_type?: string
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          exit_price?: number | null
+          id?: string
+          opened_at?: string
+          pnl?: number | null
+          pnl_percentage?: number | null
+          position_type?: string
+          quantity?: number
+          status?: string
+          stop_loss?: number | null
+          symbol?: string
+          take_profit?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_trades_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "chart_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

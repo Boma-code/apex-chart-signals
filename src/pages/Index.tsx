@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Crown, Home, History as HistoryIcon, User, LogOut } from "lucide-react";
+import { Crown, Home, History as HistoryIcon, User, LogOut, Newspaper, DollarSign, Activity } from "lucide-react";
 import { toast } from "sonner";
 import UploadSection from "@/components/UploadSection";
 import AnalysisResult from "@/components/AnalysisResult";
@@ -10,6 +10,10 @@ import HistoryTab from "@/components/HistoryTab";
 import LoadingAnalysis from "@/components/LoadingAnalysis";
 import Footer from "@/components/Footer";
 import PremiumTab from "@/components/PremiumTab";
+import PerformanceBar from "@/components/PerformanceBar";
+import NewsTab from "@/components/NewsTab";
+import PaperTradingTab from "@/components/PaperTradingTab";
+import BacktestingTab from "@/components/BacktestingTab";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-trading.jpg";
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -34,39 +38,22 @@ const Index = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisData | null>(null);
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("home");
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          checkAdminStatus(session.user.id);
-        } else {
-          setIsAdmin(false);
-        }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
-      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const checkAdminStatus = async (userId: string) => {
-    const { data } = await supabase.rpc('has_role', {
-      _user_id: userId,
-      _role: 'admin'
-    });
-    setIsAdmin(data || false);
-  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -147,16 +134,6 @@ const Index = () => {
       <div className="absolute top-4 right-4 z-20 flex gap-2">
         {user ? (
           <>
-            {isAdmin && (
-              <Button 
-                variant="outline" 
-                className="bg-background/80 backdrop-blur-sm"
-                onClick={() => navigate("/admin")}
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                Admin Dashboard
-              </Button>
-            )}
             <Button variant="outline" className="bg-background/80 backdrop-blur-sm">
               <User className="h-4 w-4 mr-2" />
               {user.email}
@@ -222,19 +199,37 @@ const Index = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
+        {user && activeTab === "home" && !analysisResult && (
+          <div className="mb-8">
+            <PerformanceBar />
+          </div>
+        )}
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8">
+          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6 mb-8">
             <TabsTrigger value="home" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
-              Analyze
+              <span className="hidden md:inline">Analyze</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <HistoryIcon className="h-4 w-4" />
-              History
+              <span className="hidden md:inline">History</span>
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-2">
+              <Newspaper className="h-4 w-4" />
+              <span className="hidden md:inline">News</span>
+            </TabsTrigger>
+            <TabsTrigger value="paper" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              <span className="hidden md:inline">Paper</span>
+            </TabsTrigger>
+            <TabsTrigger value="backtest" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              <span className="hidden md:inline">Backtest</span>
             </TabsTrigger>
             <TabsTrigger value="upgrade" className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
-              Premium
+              <span className="hidden md:inline">Premium</span>
             </TabsTrigger>
           </TabsList>
 
@@ -267,6 +262,50 @@ const Index = () => {
           <TabsContent value="history">
             <div className="max-w-4xl mx-auto">
               <HistoryTab />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="news">
+            <div className="max-w-4xl mx-auto">
+              <NewsTab />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="paper">
+            <div className="max-w-4xl mx-auto">
+              {user ? (
+                <PaperTradingTab />
+              ) : (
+                <div className="max-w-2xl mx-auto text-center py-12">
+                  <DollarSign className="h-16 w-16 mx-auto mb-6 text-primary" />
+                  <h2 className="text-3xl font-bold mb-4">Sign in to Use Paper Trading</h2>
+                  <p className="text-muted-foreground mb-8">
+                    Create an account to practice trading without risk
+                  </p>
+                  <Button size="lg" onClick={() => navigate("/auth")}>
+                    Sign In / Sign Up
+                  </Button>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="backtest">
+            <div className="max-w-4xl mx-auto">
+              {user ? (
+                <BacktestingTab />
+              ) : (
+                <div className="max-w-2xl mx-auto text-center py-12">
+                  <Activity className="h-16 w-16 mx-auto mb-6 text-primary" />
+                  <h2 className="text-3xl font-bold mb-4">Sign in to Use Backtesting</h2>
+                  <p className="text-muted-foreground mb-8">
+                    Create an account to test signals against historical data
+                  </p>
+                  <Button size="lg" onClick={() => navigate("/auth")}>
+                    Sign In / Sign Up
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
 
