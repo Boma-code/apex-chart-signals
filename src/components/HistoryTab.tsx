@@ -24,30 +24,19 @@ interface Analysis {
   ai_commentary: string;
   title: string | null;
   user_id: string | null;
+  actual_outcome: string | null;
+  outcome_verified_at: string | null;
+  outcome_pnl: number | null;
 }
 
 export default function HistoryTab() {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    checkAdminStatus();
     fetchHistory();
   }, []);
-
-  const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin'
-    });
-    
-    setIsAdmin(data || false);
-  };
 
   const fetchHistory = async () => {
     try {
@@ -55,7 +44,7 @@ export default function HistoryTab() {
         .from('chart_analyses')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(isAdmin ? 50 : 10);
+        .limit(20);
 
       if (error) throw error;
       setAnalyses(data || []);
@@ -141,53 +130,96 @@ export default function HistoryTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">
-          {isAdmin ? "Admin Panel - All Analyses" : "Analysis History"}
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Analysis History
         </h2>
-        {isAdmin && (
-          <Badge variant="destructive">Admin Mode</Badge>
-        )}
+        <p className="text-muted-foreground mt-2">Review your past chart analyses and insights</p>
       </div>
+      
       <div className="grid gap-4">
         {analyses.map((analysis) => (
           <Card 
             key={analysis.id} 
-            className="p-6 shadow-card border-border hover:border-primary transition-colors"
+            className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-glow"
           >
-            <div className="flex items-start gap-4">
-              <img
-                src={analysis.image_url}
-                alt="Chart thumbnail"
-                className="w-24 h-24 object-cover rounded-lg cursor-pointer"
+            <div className="flex items-start gap-4 p-6">
+              <div 
+                className="relative w-32 h-32 rounded-xl overflow-hidden cursor-pointer flex-shrink-0 ring-2 ring-border group-hover:ring-primary/50 transition-all"
                 onClick={() => setSelectedAnalysis(analysis)}
-              />
-              <div className="flex-1 cursor-pointer" onClick={() => setSelectedAnalysis(analysis)}>
+              >
+                <img
+                  src={analysis.image_url}
+                  alt="Chart thumbnail"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              
+              <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedAnalysis(analysis)}>
                 {analysis.title && (
-                  <h3 className="font-semibold text-lg mb-2">{analysis.title}</h3>
+                  <h3 className="font-semibold text-xl mb-3 text-foreground group-hover:text-primary transition-colors">
+                    {analysis.title}
+                  </h3>
                 )}
-                <div className="flex items-center gap-2 mb-2">
-                  {getSignalIcon(analysis.signal)}
-                  <span className="font-bold text-lg">{analysis.signal}</span>
-                  <Badge variant="outline" className="ml-auto">
-                    {analysis.confidence}%
+                
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                    analysis.signal === 'BUY' 
+                      ? 'bg-bullish/10 text-bullish' 
+                      : analysis.signal === 'SELL'
+                      ? 'bg-bearish/10 text-bearish'
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {getSignalIcon(analysis.signal)}
+                    <span className="font-bold text-sm">{analysis.signal}</span>
+                  </div>
+                  
+                  <Badge variant="outline" className="font-semibold">
+                    {analysis.confidence}% Confidence
                   </Badge>
+                  
+                  {analysis.actual_outcome && (
+                    <Badge 
+                      variant={analysis.actual_outcome === 'win' ? 'default' : 'destructive'}
+                      className="capitalize"
+                    >
+                      {analysis.actual_outcome}
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="capitalize">{analysis.asset_type}</span>
+                
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span className="capitalize font-medium">{analysis.asset_type}</span>
                   <span>•</span>
-                  <span>{analysis.market_condition}</span>
+                  <span className="capitalize">{analysis.market_condition}</span>
                   <span>•</span>
-                  <span>{new Date(analysis.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(analysis.created_at).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</span>
+                  
+                  {analysis.outcome_pnl && (
+                    <>
+                      <span>•</span>
+                      <span className={analysis.outcome_pnl > 0 ? 'text-bullish font-semibold' : 'text-bearish font-semibold'}>
+                        {analysis.outcome_pnl > 0 ? '+' : ''}{analysis.outcome_pnl.toFixed(2)}%
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -201,7 +233,10 @@ export default function HistoryTab() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(analysis.id)}>
+                    <AlertDialogAction 
+                      onClick={() => handleDelete(analysis.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
