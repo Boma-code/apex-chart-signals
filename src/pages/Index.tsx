@@ -163,34 +163,37 @@ const Index = () => {
       {!analysisResult && activeTab === "home" && (
         <div className="relative overflow-hidden">
           <div 
-            className="absolute inset-0 opacity-30"
+            className="absolute inset-0 opacity-40"
             style={{
               backgroundImage: `url(${heroImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/80 to-background" />
+          <div className="absolute inset-0 bg-gradient-hero backdrop-blur-[2px]" />
           
-          <div className="relative container mx-auto px-4 py-20 text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+          <div className="relative container mx-auto px-4 py-24 md:py-32 text-center">
+            <div className="inline-block px-4 py-1 mb-6 rounded-full bg-primary/10 border border-primary/20">
+              <span className="text-sm text-primary font-medium">Professional Trading Intelligence</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary animate-pulse">
               Chart Signal Pro
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              AI-Powered Trading Signals with Precision Analysis
+            <p className="text-xl md:text-2xl text-foreground/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Advanced AI-Powered Trading Signals with Real-Time Market Analysis
             </p>
-            <div className="flex flex-wrap gap-4 justify-center text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-bullish"></div>
-                <span>Pattern Recognition</span>
+            <div className="flex flex-wrap gap-6 justify-center text-sm">
+              <div className="flex items-center gap-3 bg-card/50 backdrop-blur-sm px-6 py-3 rounded-full border border-border shadow-glow">
+                <div className="w-3 h-3 rounded-full bg-bullish shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+                <span className="text-foreground font-medium">Pattern Recognition</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-                <span>Technical Indicators</span>
+              <div className="flex items-center gap-3 bg-card/50 backdrop-blur-sm px-6 py-3 rounded-full border border-border shadow-glow">
+                <div className="w-3 h-3 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                <span className="text-foreground font-medium">Technical Indicators</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-accent"></div>
-                <span>Confidence Scoring</span>
+              <div className="flex items-center gap-3 bg-card/50 backdrop-blur-sm px-6 py-3 rounded-full border border-border shadow-glow">
+                <div className="w-3 h-3 rounded-full bg-accent shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+                <span className="text-foreground font-medium">Confidence Scoring</span>
               </div>
             </div>
           </div>

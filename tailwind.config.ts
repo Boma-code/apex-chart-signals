@@ -60,6 +60,7 @@ export default {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-bullish': 'var(--gradient-bullish)',
         'gradient-bearish': 'var(--gradient-bearish)',
+        'gradient-hero': 'var(--gradient-hero)',
       },
       boxShadow: {
         'glow': 'var(--shadow-glow)',
