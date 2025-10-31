@@ -15,8 +15,29 @@ interface AnalysisResultProps {
     pattern_details: string;
     indicators_analysis: string;
     ai_commentary: string;
+    marketData?: {
+      symbol: string;
+      currentPrice: number;
+      priceChange24h: number;
+      indicators: {
+        ema20: number;
+        ema50: number;
+        rsi: number;
+        macd: {
+          macd: number;
+          signal: number;
+          histogram: number;
+        };
+        bollingerBands: {
+          upper: number;
+          middle: number;
+          lower: number;
+        };
+        vwap: number;
+      };
+    };
   };
-  imageUrl: string;
+  imageUrl: string | null;
 }
 
 export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultProps) {
@@ -63,10 +84,64 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Chart Preview */}
-      <Card className="overflow-hidden shadow-card border-border">
-        <img src={imageUrl} alt="Analyzed chart" className="w-full h-auto" />
-      </Card>
+      {/* Chart Preview or Market Data */}
+      {imageUrl ? (
+        <Card className="overflow-hidden shadow-card border-border">
+          <img src={imageUrl} alt="Analyzed chart" className="w-full h-auto" />
+        </Card>
+      ) : analysis.marketData && (
+        <Card className="p-6 shadow-card border-border">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-bold">{analysis.marketData.symbol}</h3>
+                <p className="text-sm text-muted-foreground">Real-Time Market Analysis</p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold">${analysis.marketData.currentPrice.toLocaleString()}</div>
+                <Badge variant={analysis.marketData.priceChange24h >= 0 ? "default" : "destructive"}>
+                  {analysis.marketData.priceChange24h >= 0 ? "+" : ""}{analysis.marketData.priceChange24h.toFixed(2)}%
+                </Badge>
+              </div>
+            </div>
+
+            {/* Technical Indicators Display */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">EMA 20</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.ema20.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">EMA 50</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.ema50.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">RSI (14)</p>
+                <p className="text-sm font-semibold">{analysis.marketData.indicators.rsi.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">VWAP</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.vwap.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 pt-2">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">BB Upper</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.upper.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">BB Middle</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.middle.toFixed(2)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">BB Lower</p>
+                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.lower.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Signal Card with Enhanced Metrics */}
       <Card className={`p-8 shadow-glow border-2 ${getSignalColor(analysis.signal)}`}>

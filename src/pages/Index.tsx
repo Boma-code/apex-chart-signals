@@ -14,6 +14,7 @@ import PerformanceBar from "@/components/PerformanceBar";
 import NewsTab from "@/components/NewsTab";
 import PaperTradingTab from "@/components/PaperTradingTab";
 import BacktestingTab from "@/components/BacktestingTab";
+import RealTimeAnalysis from "@/components/RealTimeAnalysis";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-trading.jpg";
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -241,10 +242,27 @@ const Index = () => {
               {isAnalyzing ? (
                 <LoadingAnalysis />
               ) : !analysisResult ? (
-                <UploadSection onImageSelected={handleImageSelected} isAnalyzing={isAnalyzing} />
+                <>
+                  <RealTimeAnalysis 
+                    onAnalysisComplete={(data) => {
+                      setAnalysisResult(data);
+                      setCurrentImageUrl(null);
+                    }}
+                    user={user}
+                  />
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-border"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-4 text-muted-foreground">Or upload a chart</span>
+                    </div>
+                  </div>
+                  <UploadSection onImageSelected={handleImageSelected} isAnalyzing={isAnalyzing} />
+                </>
               ) : (
                 <>
-                  <AnalysisResult analysis={analysisResult} imageUrl={currentImageUrl!} />
+                  <AnalysisResult analysis={analysisResult} imageUrl={currentImageUrl} />
                   <div className="flex justify-center mt-8">
                     <Button
                       onClick={() => {
