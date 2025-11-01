@@ -8,6 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { TrendingUp } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(100, "Password too long")
+});
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -31,24 +37,48 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const validateInput = () => {
+    try {
+      authSchema.parse({ email: email.trim(), password });
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateInput()) return;
+    
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else {
+          throw error;
+        }
+        return;
+      }
       
       toast.success("Account created! You can now sign in.");
+      setEmail("");
+      setPassword("");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to create account");
     } finally {
       setLoading(false);
     }
@@ -56,20 +86,30 @@ export default function Auth() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateInput()) return;
+    
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Invalid login")) {
+          toast.error("Invalid email or password");
+        } else {
+          throw error;
+        }
+        return;
+      }
       
       toast.success("Signed in successfully!");
       navigate("/");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to sign in");
     } finally {
       setLoading(false);
     }
@@ -146,8 +186,11 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Must be at least 8 characters
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating account..." : "Create Account"}

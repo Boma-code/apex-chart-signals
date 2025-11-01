@@ -2,17 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Crown, Home, History as HistoryIcon, User, LogOut, Newspaper, DollarSign, Activity } from "lucide-react";
+import { Home, History as HistoryIcon, LogOut, Newspaper, Activity, User } from "lucide-react";
 import { toast } from "sonner";
 import UploadSection from "@/components/UploadSection";
 import AnalysisResult from "@/components/AnalysisResult";
 import HistoryTab from "@/components/HistoryTab";
 import LoadingAnalysis from "@/components/LoadingAnalysis";
 import Footer from "@/components/Footer";
-import PremiumTab from "@/components/PremiumTab";
 import PerformanceBar from "@/components/PerformanceBar";
 import NewsTab from "@/components/NewsTab";
-import PaperTradingTab from "@/components/PaperTradingTab";
 import BacktestingTab from "@/components/BacktestingTab";
 import RealTimeAnalysis from "@/components/RealTimeAnalysis";
 import { supabase } from "@/integrations/supabase/client";
@@ -210,7 +208,7 @@ const Index = () => {
         )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6 mb-8">
+          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-4 mb-8">
             <TabsTrigger value="home" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden md:inline">Analyze</span>
@@ -223,17 +221,9 @@ const Index = () => {
               <Newspaper className="h-4 w-4" />
               <span className="hidden md:inline">News</span>
             </TabsTrigger>
-            <TabsTrigger value="paper" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              <span className="hidden md:inline">Paper</span>
-            </TabsTrigger>
             <TabsTrigger value="backtest" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
               <span className="hidden md:inline">Backtest</span>
-            </TabsTrigger>
-            <TabsTrigger value="upgrade" className="flex items-center gap-2">
-              <Crown className="h-4 w-4" />
-              <span className="hidden md:inline">Premium</span>
             </TabsTrigger>
           </TabsList>
 
@@ -292,25 +282,6 @@ const Index = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="paper">
-            <div className="max-w-4xl mx-auto">
-              {user ? (
-                <PaperTradingTab />
-              ) : (
-                <div className="max-w-2xl mx-auto text-center py-12">
-                  <DollarSign className="h-16 w-16 mx-auto mb-6 text-primary" />
-                  <h2 className="text-3xl font-bold mb-4">Sign in to Use Paper Trading</h2>
-                  <p className="text-muted-foreground mb-8">
-                    Create an account to practice trading without risk
-                  </p>
-                  <Button size="lg" onClick={() => navigate("/auth")}>
-                    Sign In / Sign Up
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
           <TabsContent value="backtest">
             <div className="max-w-4xl mx-auto">
               {user ? (
@@ -321,25 +292,6 @@ const Index = () => {
                   <h2 className="text-3xl font-bold mb-4">Sign in to Use Backtesting</h2>
                   <p className="text-muted-foreground mb-8">
                     Create an account to test signals against historical data
-                  </p>
-                  <Button size="lg" onClick={() => navigate("/auth")}>
-                    Sign In / Sign Up
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="upgrade">
-            <div className="max-w-4xl mx-auto">
-              {user ? (
-                <PremiumTab />
-              ) : (
-                <div className="max-w-2xl mx-auto text-center py-12">
-                  <Crown className="h-16 w-16 mx-auto mb-6 text-primary" />
-                  <h2 className="text-3xl font-bold mb-4">Sign in to Access Premium</h2>
-                  <p className="text-muted-foreground mb-8">
-                    Create an account to unlock premium features with crypto payment
                   </p>
                   <Button size="lg" onClick={() => navigate("/auth")}>
                     Sign In / Sign Up

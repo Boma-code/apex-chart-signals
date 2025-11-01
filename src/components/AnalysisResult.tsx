@@ -1,8 +1,8 @@
-import { TrendingUp, TrendingDown, Minus, Target, Shield, DollarSign, AlertTriangle, BarChart3, Percent } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { TrendingUp, TrendingDown, AlertTriangle, Target, Shield, DollarSign } from "lucide-react";
 import { useMemo } from "react";
+import MarketChart from "./MarketChart";
 
 interface AnalysisResultProps {
   analysis: {
@@ -18,7 +18,15 @@ interface AnalysisResultProps {
     marketData?: {
       symbol: string;
       currentPrice: number;
-      priceChange24h: number;
+      change24h: number;
+      candles: Array<{
+        timestamp: number;
+        open: number;
+        high: number;
+        low: number;
+        close: number;
+        volume: number;
+      }>;
       indicators: {
         ema20: number;
         ema50: number;
@@ -78,115 +86,65 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
       case "SELL":
         return <TrendingDown className="h-6 w-6" />;
       default:
-        return <Minus className="h-6 w-6" />;
+        return <AlertTriangle className="h-6 w-6" />;
     }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Chart Preview or Market Data */}
+      {/* Chart Preview or Market Data Chart */}
       {imageUrl ? (
-        <Card className="overflow-hidden shadow-card border-border">
-          <img src={imageUrl} alt="Analyzed chart" className="w-full h-auto" />
+        <Card className="overflow-hidden border-2 border-primary/20">
+          <img 
+            src={imageUrl} 
+            alt="Analyzed chart" 
+            className="w-full h-auto max-h-[500px] object-contain"
+          />
         </Card>
-      ) : analysis.marketData && (
-        <Card className="p-6 shadow-card border-border">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-bold">{analysis.marketData.symbol}</h3>
-                <p className="text-sm text-muted-foreground">Real-Time Market Analysis</p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold">${analysis.marketData.currentPrice.toLocaleString()}</div>
-                <Badge variant={analysis.marketData.priceChange24h >= 0 ? "default" : "destructive"}>
-                  {analysis.marketData.priceChange24h >= 0 ? "+" : ""}{analysis.marketData.priceChange24h.toFixed(2)}%
-                </Badge>
-              </div>
-            </div>
-
-            {/* Technical Indicators Display */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">EMA 20</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.ema20.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">EMA 50</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.ema50.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">RSI (14)</p>
-                <p className="text-sm font-semibold">{analysis.marketData.indicators.rsi.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">VWAP</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.vwap.toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 pt-2">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">BB Upper</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.upper.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">BB Middle</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.middle.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">BB Lower</p>
-                <p className="text-sm font-semibold">${analysis.marketData.indicators.bollingerBands.lower.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
+      ) : analysis.marketData ? (
+        <MarketChart marketData={analysis.marketData} analysis={analysis} />
+      ) : null}
 
       {/* Signal Card with Enhanced Metrics */}
-      <Card className={`p-8 shadow-glow border-2 ${getSignalColor(analysis.signal)}`}>
+      <Card className="p-8 border-2 border-primary/20">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {getSignalIcon(analysis.signal)}
               <div>
                 <h3 className="text-4xl font-bold">{analysis.signal}</h3>
-                <p className="text-sm opacity-90">Trading Signal</p>
+                <p className="text-sm text-muted-foreground">Trading Signal</p>
               </div>
             </div>
             <div className="text-right">
               <div className="text-5xl font-bold">{analysis.confidence}%</div>
-              <p className="text-sm opacity-90">Confidence Score</p>
+              <p className="text-sm text-muted-foreground">Confidence Score</p>
             </div>
           </div>
           
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="opacity-90">Signal Strength</span>
+              <span>Signal Strength</span>
               <Badge variant={analysis.confidence >= 80 ? "default" : analysis.confidence >= 60 ? "secondary" : "outline"}>
                 {analysis.confidence >= 80 ? "Very Strong" : analysis.confidence >= 60 ? "Strong" : "Moderate"}
               </Badge>
             </div>
-            <Progress value={analysis.confidence} className="h-3" />
           </div>
 
           {/* Risk-Reward Display */}
           {riskRewardRatio && (
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
               <div className="text-center">
-                <BarChart3 className="h-5 w-5 mx-auto mb-1 opacity-75" />
                 <div className="text-2xl font-bold">{riskRewardRatio}:1</div>
-                <p className="text-xs opacity-75">Risk/Reward</p>
+                <p className="text-xs text-muted-foreground">Risk/Reward</p>
               </div>
               <div className="text-center">
-                <TrendingUp className="h-5 w-5 mx-auto mb-1 opacity-75" />
-                <div className="text-2xl font-bold">+{potentialProfit}%</div>
-                <p className="text-xs opacity-75">Potential Gain</p>
+                <div className="text-2xl font-bold text-bullish">+{potentialProfit}%</div>
+                <p className="text-xs text-muted-foreground">Potential Gain</p>
               </div>
               <div className="text-center">
-                <TrendingDown className="h-5 w-5 mx-auto mb-1 opacity-75" />
-                <div className="text-2xl font-bold">-{potentialLoss}%</div>
-                <p className="text-xs opacity-75">Potential Loss</p>
+                <div className="text-2xl font-bold text-bearish">-{potentialLoss}%</div>
+                <p className="text-xs text-muted-foreground">Potential Loss</p>
               </div>
             </div>
           )}
@@ -196,9 +154,9 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
       {/* Enhanced Key Levels with Visual Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {analysis.entry_price && (
-          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-primary/5 hover:shadow-glow transition-all">
+          <Card className="p-6 border-primary/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary/20">
+              <div className="p-2 rounded-lg bg-primary/10">
                 <Target className="h-5 w-5 text-primary" />
               </div>
               <h4 className="font-semibold">Entry Price</h4>
@@ -209,9 +167,9 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
         )}
         
         {analysis.stop_loss && (
-          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-bearish/5 hover:shadow-glow transition-all">
+          <Card className="p-6 border-bearish/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-bearish/20">
+              <div className="p-2 rounded-lg bg-bearish/10">
                 <Shield className="h-5 w-5 text-bearish" />
               </div>
               <h4 className="font-semibold">Stop Loss</h4>
@@ -225,24 +183,21 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
         )}
         
         {analysis.take_profit && (
-          <Card className="p-6 shadow-card border-border bg-gradient-to-br from-card to-bullish/5 hover:shadow-glow transition-all">
+          <Card className="p-6 border-bullish/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-bullish/20">
+              <div className="p-2 rounded-lg bg-bullish/10">
                 <DollarSign className="h-5 w-5 text-bullish" />
               </div>
               <h4 className="font-semibold">Take Profit</h4>
             </div>
             <p className="text-3xl font-bold mb-2">{analysis.take_profit.toFixed(5)}</p>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Percent className="h-3 w-3" />
-              <span>Target profit level</span>
-            </div>
+            <Badge variant="outline" className="text-xs">Target profit level</Badge>
           </Card>
         )}
       </div>
 
       {/* Market Condition */}
-      <Card className="p-6 shadow-card border-border">
+      <Card className="p-6">
         <div className="flex items-center gap-2 mb-3">
           <h4 className="font-semibold">Market Condition</h4>
           <Badge variant="outline">{analysis.market_condition}</Badge>
@@ -251,7 +206,7 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
 
       {/* Pattern Details */}
       {analysis.pattern_details && (
-        <Card className="p-6 shadow-card border-border">
+        <Card className="p-6">
           <h4 className="font-semibold mb-3">Chart Patterns</h4>
           <p className="text-muted-foreground leading-relaxed">{analysis.pattern_details}</p>
         </Card>
@@ -259,14 +214,14 @@ export default function AnalysisResult({ analysis, imageUrl }: AnalysisResultPro
 
       {/* Indicators Analysis */}
       {analysis.indicators_analysis && (
-        <Card className="p-6 shadow-card border-border">
+        <Card className="p-6">
           <h4 className="font-semibold mb-3">Technical Indicators</h4>
           <p className="text-muted-foreground leading-relaxed">{analysis.indicators_analysis}</p>
         </Card>
       )}
 
       {/* AI Commentary */}
-      <Card className="p-6 shadow-card border-border bg-secondary/50">
+      <Card className="p-6 bg-secondary/20">
         <h4 className="font-semibold mb-3">AI Analysis Summary</h4>
         <p className="text-foreground leading-relaxed whitespace-pre-line">{analysis.ai_commentary}</p>
       </Card>

@@ -1,10 +1,10 @@
 project_id = "lfczkxdigssyszpmygxq"
 
 [functions.analyze-chart]
-verify_jwt = false
+verify_jwt = true
 
 [functions.fetch-market-data]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-signal]
-verify_jwt = false
+verify_jwt = true

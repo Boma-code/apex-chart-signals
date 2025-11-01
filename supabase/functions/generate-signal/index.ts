@@ -13,6 +13,15 @@ serve(async (req) => {
 
   try {
     const { marketData, assetType } = await req.json();
+    
+    // Input validation
+    if (!marketData || typeof marketData !== 'object') {
+      return new Response(JSON.stringify({ error: 'Invalid market data' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!assetType || typeof assetType !== 'string' || assetType.length > 50) {
+      return new Response(JSON.stringify({ error: 'Invalid asset type' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    
     console.log('Generating signal for:', { symbol: marketData.symbol, assetType });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');

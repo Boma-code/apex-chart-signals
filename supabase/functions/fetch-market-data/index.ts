@@ -24,7 +24,23 @@ serve(async (req) => {
 
   try {
     const { symbol = 'BTCUSDT', interval = '15', limit = 100 } = await req.json();
-    console.log('Fetching market data for:', { symbol, interval, limit });
+    
+    // Input validation
+    const ALLOWED_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'BNBUSDT', 'ADAUSDT', 'DOGEUSDT', 'MATICUSDT'];
+    const ALLOWED_INTERVALS = ['1', '5', '15', '30', '60', '240', 'D'];
+    
+    if (!ALLOWED_SYMBOLS.includes(symbol)) {
+      return new Response(JSON.stringify({ error: 'Invalid symbol' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!ALLOWED_INTERVALS.includes(interval)) {
+      return new Response(JSON.stringify({ error: 'Invalid interval' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const parsedLimit = parseInt(limit);
+    if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 500) {
+      return new Response(JSON.stringify({ error: 'Limit must be 1-500' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    
+    console.log('Fetching market data for:', { symbol, interval, limit: parsedLimit });
 
     // Fetch candlestick data from Bybit
     const klineUrl = `https://api.bybit.com/v5/market/kline?category=spot&symbol=${symbol}&interval=${interval}&limit=${limit}`;
